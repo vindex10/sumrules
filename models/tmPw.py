@@ -1,6 +1,5 @@
 import scipy as sp
 from scipy import special
-from multiprocessing.dummy import Pool as ThPool
 from cubature import cubature
 
 from .basic import g, m, mu, eps, INF
