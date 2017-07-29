@@ -1,11 +1,11 @@
 import scipy as sp
 from scipy import special
-from cubature import cubature
 
 # Parameters
 
 g = -0.6
 m = 1.27
+e1 = 0.303
 mu = m/2
 eps = 0.01
 INF = 100
