@@ -2,10 +2,11 @@ import scipy as sp
 from scipy import special
 from cubature import cubature
 
-from .basic import g, m, mu, eps, INF
+from .basic import config as bconfig
+m = bconfig["m"]
 from .basic import mom, beta, eta, coAngle
 
-from ..config import config
+from ..config import config as mconfig
 
 # Matrix elements
 def MX(r, q, Crq):
@@ -31,5 +32,5 @@ def sigma(p):
             s, MP
     """
 
-    res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=config["abs_err"], vectorized=True)
-    return beta(p["s"])/32/sp.pi/p["s"]*res
+    res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=mconfig["abs_err"], relerr=mconfig["rel_err"], vectorized=True)
+    return beta(p["s"])/32/sp.pi/p["s"]*res[0]

@@ -3,10 +3,14 @@ from scipy import special
 from multiprocessing.dummy import Pool as ThPool
 from cubature import cubature
 
-from .basic import g, m, mu, eps, INF
+from .basic import config as bconfig
+m = bconfig["m"]
+eps = bconfig["eps"]
 from .basic import mom, beta, eta, coAngle
 
-from ..config import config
+from ..config import config as pconfig
+
+config = {"maxP": 100}
 
 # Wave functions
 
@@ -44,7 +48,7 @@ def McolP(p):
         p (for params):
             p, q, Cpq, psiColP, MP
     """
-    res, err = cubature(McolP_f, 3, 2, [0, -1, 0], [INF, 1, 2*sp.pi], args=[p], abserr=config["abs_err"], relerr=config["rel_err"], vectorized=True)
+    res, err = cubature(McolP_f, 3, 2, [0, -1, 0], [config["maxP"], 1, 2*sp.pi], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
     return res[0] + 1j*res[1]
 
 def sigma_f(x_args, p):
@@ -57,7 +61,7 @@ def sigma_f(x_args, p):
     px = x_args.T
 
     #Multiprocessing to eval McolP for multiple args in parallel
-    pool = ThPool(config["num_threads"])
+    pool = ThPool(pconfig["num_threads"])
     McolP_evaled = pool.map(lambda x: sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x, "psiColP": p["psiColP"], "MP": p["MP"]}))**2, px[0])
     McolP_evaled = sp.array(McolP_evaled)
 
@@ -69,5 +73,5 @@ def sigma(p):
             s, psiColP, MP
     """
 
-    res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=config["abs_err"], vectorized=True)
-    return beta(p["s"])/32/sp.pi/p["s"]*res
+    res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
+    return beta(p["s"])/32/sp.pi/p["s"]*res[0]
