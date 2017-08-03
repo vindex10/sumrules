@@ -13,7 +13,7 @@ config.update({"mu": config["m"]/2})
 # Kinematics
 
 def mom(s, m=0):
-    return sp.sqrt(s/4 - config["m"]**2)
+    return sp.sqrt(s/4 - m**2)
 
 def beta(s):
     return sp.sqrt(1 - 4*config["m"]**2/s)
