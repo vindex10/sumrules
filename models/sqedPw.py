@@ -64,4 +64,4 @@ def sumrule(p):
     """
 
     res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=config["abs_err"], relerr=config["rel_err"], vectorized=True)
-    return res
+    return res[0]
