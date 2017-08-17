@@ -1,0 +1,4 @@
+# packages which cannot be installed with pip
+# and should be installed from source
+
+cubature

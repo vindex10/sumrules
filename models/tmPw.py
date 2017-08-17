@@ -1,3 +1,6 @@
+from __future__ import absolute_import, division
+from builtins import * # quite boldly but simply enough
+
 import scipy as sp
 from scipy import special
 from cubature import cubature
