@@ -85,7 +85,7 @@ def sumrule_f(x_args, p):
     """
     px = x_args.T
 
-    pool = ThPool(config["num_threads"])
+    pool = ThPool(pconfig["num_threads"])
     sumrule_evaled = pool.map(lambda s: sigma({"s": s, "psiColP": p["psiColP"], "MP": p["MP"]})/s, px[0])
     sumrule_evaled = sp.array(sumrule_evaled)
 
