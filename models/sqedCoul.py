@@ -98,5 +98,5 @@ def sumrule(p):
             MP, psiColP, minS, maxS
     """
 
-    res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=config["abs_err"], relerr=config["rel_err"], vectorized=True)
+    res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
     return res[0]
