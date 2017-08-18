@@ -7,6 +7,7 @@ from .basic import config as bconfig
 m = bconfig["m"]
 eps = bconfig["eps"]
 e1 = bconfig["e1"]
+dimfactor = bconfig["dimfactor"]
 from .basic import mom, beta, eta, coAngle
 
 from ..config import config as pconfig
@@ -60,8 +61,8 @@ def sigma_f(x_args, p):
         p:
             s, psiColP, MP
     """
-    #Multiprocessing to eval McolP for multiple args in parallel
-    res = sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x_args[0], "psiColP": p["psiColP"], "MP": p["MP"]}))**2
+    # use dimfactor for abs_err to be reasonable
+    res = dimfactor*beta(p["s"])/32/sp.pi/p["s"]*sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x_args[0], "psiColP": p["psiColP"], "MP": p["MP"]}))**2
 
     return res
 
@@ -72,7 +73,7 @@ def sigma(p):
     """
 
     res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=False)
-    return beta(p["s"])/32/sp.pi/p["s"]*res[0]
+    return res[0]
 
 
 def sumrule_f(x_args, p):
