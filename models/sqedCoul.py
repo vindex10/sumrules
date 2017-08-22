@@ -8,7 +8,7 @@ m = bconfig["m"]
 eps = bconfig["eps"]
 e1 = bconfig["e1"]
 dimfactor = bconfig["dimfactor"]
-from .basic import mom, beta, eta, coAngle
+from .basic import mom, energ, beta, eta, coAngle
 
 from ..config import config as pconfig
 
