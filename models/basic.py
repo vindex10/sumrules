@@ -15,6 +15,9 @@ config.update({"mu": config["m"]/2})
 def mom(s, m=0):
     return sp.sqrt(s/4 - m**2)
 
+def energ(p, m=0):
+    return sp.sqrt(p**2 + m**2)
+
 def beta(s):
     return sp.sqrt(1 - 4*config["m"]**2/s)
 
@@ -23,3 +26,4 @@ def eta(k):
 
 def coAngle(Cpq, Cpr, Fqr):
     return Cpq*Cpr + sp.sqrt(1 - Cpq**2)*sp.sqrt(1 - Cpr**2)*sp.cos(Fqr)
+

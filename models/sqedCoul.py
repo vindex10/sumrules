@@ -43,7 +43,7 @@ def McolP_f(x_args, p):
     """
     px = x_args.T
 
-    res = px[0]**2/(2*sp.pi)**3*sp.sqrt((p["p"]**2+m**2)/(px[0]**2+m**2))*sp.conj(psiColP(p["p"], px[0], coAngle(p["Cpq"], px[1], px[2])))*p["MP"](px[0], p["q"], px[1], px[2])
+    res = px[0]**2/(2*sp.pi)**3*(energ(p["p"], m)/energ(px[0], m))*sp.conj(psiColP(p["p"], px[0], coAngle(p["Cpq"], px[1], px[2])))*p["MP"](px[0], p["q"], px[1], px[2])
     return sp.vstack((sp.real(res), sp.imag(res))).T
 
 def McolP(p):

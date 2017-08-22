@@ -5,12 +5,13 @@ from cubature import cubature
 from multiprocessing.dummy import Pool as ThPool
 
 from .basic import config as bconfig
-from .basic import mom, beta, eta, coAngle
+from .basic import mom, energ, beta, eta, coAngle
 from ..config import config
 
 # Translate params dict to globals
 m = bconfig["m"]
 e1 = bconfig["e1"]
+dimfactor = bconfig["dimfactor"]
 
 # Matrix elements
 def MP0(p, q, Cpq, Fpq):
@@ -29,7 +30,7 @@ def sigma_f(x_args, p):
     """
     px = x_args.T
 
-    return (beta(p["s"])/32/sp.pi/p["s"]*sp.absolute(p["MP"](mom(p["s"], m), mom(p["s"]), px[0], 0))**2).T
+    return dimfactor*beta(p["s"])/32/sp.pi/p["s"]*(sp.absolute(p["MP"](mom(p["s"], m), mom(p["s"]), px[0], 0))**2).T
 
 def sigma(p):
     """
