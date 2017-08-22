@@ -9,6 +9,7 @@ from cubature import cubature
 from .basic import config as bconfig
 m = bconfig["m"]
 eps = bconfig["eps"]
+dimfactor = bconfig["dimfactor"]
 from .basic import mom, beta, eta, coAngle
 
 from ..config import config as pconfig
@@ -68,7 +69,7 @@ def sigma_f(x_args, p):
     McolP_evaled = pool.map(lambda x: sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x, "psiColP": p["psiColP"], "MP": p["MP"]}))**2, px[0])
     McolP_evaled = sp.array(McolP_evaled)
 
-    return McolP_evaled.T
+    return dimfactor*beta(p["s"])/32/sp.pi/p["s"]*McolP_evaled.T
 
 def sigma(p):
     """
@@ -77,4 +78,4 @@ def sigma(p):
     """
 
     res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
-    return beta(p["s"])/32/sp.pi/p["s"]*res[0]
+    return res[0]

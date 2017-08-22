@@ -7,6 +7,7 @@ from cubature import cubature
 
 from .basic import config as bconfig
 m = bconfig["m"]
+dimfactor = bconfig["dimfactor"]
 from .basic import mom, beta, eta, coAngle
 
 from ..config import config as mconfig
@@ -27,7 +28,7 @@ def sigma_f(x_args, p):
     """
     px = x_args.T
 
-    return (sp.absolute(p["MP"](mom(p["s"]), mom(p["s"], m), px[0]))**2).T
+    return dimfactor*beta(p["s"])/32/sp.pi/p["s"]*(sp.absolute(p["MP"](mom(p["s"]), mom(p["s"], m), px[0]))**2).T
 
 def sigma(p):
     """
@@ -36,4 +37,4 @@ def sigma(p):
     """
 
     res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=mconfig["abs_err"], relerr=mconfig["rel_err"], vectorized=True)
-    return beta(p["s"])/32/sp.pi/p["s"]*res[0]
+    return res[0]

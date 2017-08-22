@@ -10,7 +10,8 @@ from .basic import config as bconfig
 m = bconfig["m"]
 eps = bconfig["eps"]
 e1 = bconfig["e1"]
-from .basic import mom, beta, eta, coAngle
+dimfactor = bconfig["dimfactor"]
+from .basic import mom, energ, beta, eta, coAngle
 
 from ..config import config as pconfig
 
@@ -45,7 +46,7 @@ def McolP_f(x_args, p):
     """
     px = x_args.T
 
-    res = px[0]**2/(2*sp.pi)**3*sp.sqrt((p["p"]**2+m**2)/(px[0]**2+m**2))*sp.conj(psiColP(p["p"], px[0], coAngle(p["Cpq"], px[1], px[2])))*p["MP"](px[0], p["q"], px[1], px[2])
+    res = px[0]**2/(2*sp.pi)**3*(energ(p["p"], m)/energ(px[0], m))*sp.conj(psiColP(p["p"], px[0], coAngle(p["Cpq"], px[1], px[2])))*p["MP"](px[0], p["q"], px[1], px[2])
     return sp.vstack((sp.real(res), sp.imag(res))).T
 
 def McolP(p):
@@ -63,8 +64,8 @@ def sigma_f(x_args, p):
         p:
             s, psiColP, MP
     """
-    #Multiprocessing to eval McolP for multiple args in parallel
-    res = sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x_args[0], "psiColP": p["psiColP"], "MP": p["MP"]}))**2
+    # use dimfactor for abs_err to be reasonable
+    res = dimfactor*beta(p["s"])/32/sp.pi/p["s"]*sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x_args[0], "psiColP": p["psiColP"], "MP": p["MP"]}))**2
 
     return res
 
@@ -75,7 +76,7 @@ def sigma(p):
     """
 
     res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=False)
-    return beta(p["s"])/32/sp.pi/p["s"]*res[0]
+    return res[0]
 
 
 def sumrule_f(x_args, p):
@@ -88,7 +89,7 @@ def sumrule_f(x_args, p):
     """
     px = x_args.T
 
-    pool = ThPool(config["num_threads"])
+    pool = ThPool(pconfig["num_threads"])
     sumrule_evaled = pool.map(lambda s: sigma({"s": s, "psiColP": p["psiColP"], "MP": p["MP"]})/s, px[0])
     sumrule_evaled = sp.array(sumrule_evaled)
 
@@ -101,5 +102,5 @@ def sumrule(p):
             MP, psiColP, minS, maxS
     """
 
-    res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=config["abs_err"], relerr=config["rel_err"], vectorized=True)
+    res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
     return res[0]
