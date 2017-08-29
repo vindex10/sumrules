@@ -1,106 +1,140 @@
-from __future__ import absolute_import, division
-from builtins import * # quite boldly but simply enough
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import scipy as sp
 from scipy import special
-from multiprocessing.dummy import Pool as ThPool
 from cubature import cubature
 
-from .basic import config as bconfig
-m = bconfig["m"]
-eps = bconfig["eps"]
-e1 = bconfig["e1"]
-dimfactor = bconfig["dimfactor"]
-from .basic import mom, energ, beta, eta, coAngle
+from ..parallel import npMap, mpMap
 
-from ..config import config as pconfig
+from ..analytics import psiColP, sqedMP0 as MP0, sqedMP2 as MP2
+from ..analytics import mom, energ, beta, eta, coAngle
 
-config = {"maxP": 200}
+from . import config as mconfig
 
-# Wave functions
+class McolPEvaluator:
+    def __init__(self):
+        self.CONST = mconfig
+        self.psiColP = psiColP
+        self.MP = MP0
+        self.mapper = npMap
+        self.vectorized = True
+        self.maxP = 500
+        self.absErr = 1e-5
+        self.relErr = 1e-3
 
-def psiColP(k, p, Ckp):
-    "\psi^{col}_p(k, p, Ckp) - Coulomb wave in momentum space"
-    return -4*sp.pi*sp.exp(-sp.pi*eta(k)/2)*sp.special.gamma(1 + 1j*eta(k))*(
-            2*(p**2 - (k + 1j*eps)**2)**(1j*eta(k))*eps*(-1 - 1j*eta(k))/(p**2 + k**2 - 2*p*k*Ckp + eps**2)**(2 + 1j*eta(k)) +
-            2*(k +  1j*eps)*eta(k)*(p**2 - (k + 1j*eps)**2)**(-1 + 1j*eta(k))/(p**2 + k**2 - 2*p*k*Ckp + eps**2)**(1 + 1j*eta(k))
-            )
+    def params(self, paramdict=None):
+        keylist = ("vectorized"
+                  ,"maxP"
+                  ,"absErr"
+                  ,"relErr")
 
+        if paramdict is None:
+            return { k: getattr(self, k) for k in keylist }
 
-# Matrix elements
-def MP0(p, q, Cpq, Fpq):
-    return 2j*e1**2*(1 - p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + m**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + m**2)))
+        for key, val in paramdict.items():
+            if key in keylist:
+                setattr(self, key, val)
+        return True
 
-def MP2(p, q, Cpq, Fpq):
-    return 2j*e1**2*p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + m**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + m**2))*sp.exp(2j*Fpq)
+    def compute(self, p, q, Cpq):
+        """
+            p (for params):
+                p, q, Cpq
+        """
+        res, err = cubature(self.McolP_f, 3, 2, [0, -1, 0], [self.maxP, 1, 2*sp.pi], args=[p, q, Cpq], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        return res[0] + 1j*res[1]
 
+    def McolP_f(self, x_args, p, q, Cpq):
+        """
+            x_args:
+                px[0] for px
+                px[1] for Cos(px,p)
+                px[2] for phi
+        """
+        res = self.mapper(lambda px: px[0]**2/(2*sp.pi)**3*(energ(p, self.CONST["m"])/energ(px[0], self.CONST["m"]))*sp.conj(self.psiColP(p, px[0], coAngle(Cpq, px[1], px[2])))*self.MP(px[0], q, px[1], px[2]), x_args)
+        res = sp.array((sp.real(res), sp.imag(res))).T
 
-def McolP_f(x_args, p):
-    """
-        x_args:
-            px[0] for px
-            px[1] for Cos(px,p)
-            px[2] for phi
-        p (for params):
-            p, q, Cpq, psiColP, MP
-    """
-    px = x_args.T
+        return res
 
-    res = px[0]**2/(2*sp.pi)**3*(energ(p["p"], m)/energ(px[0], m))*sp.conj(psiColP(p["p"], px[0], coAngle(p["Cpq"], px[1], px[2])))*p["MP"](px[0], p["q"], px[1], px[2])
-    return sp.vstack((sp.real(res), sp.imag(res))).T
+class SigmaEvaluator:
+    def __init__(self):
+        self.CONST = mconfig
+        self.psiColP = psiColP
+        self.McolPEvaluatorInstance = McolPEvaluator()
+        self.mapper = npMap
+        self.vectorized = False
+        self.absErr = 1e-5
+        self.relErr = 1e-3
 
-def McolP(p):
-    """
-        p (for params):
-            p, q, Cpq, psiColP, MP
-    """
-    res, err = cubature(McolP_f, 3, 2, [0, -1, 0], [config["maxP"], 1, 2*sp.pi], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
-    return res[0] + 1j*res[1]
+    def params(self, paramdict=None):
+        keylist = ("vectorized"
+                  ,"absErr"
+                  ,"relErr")
 
-def sigma_f(x_args, p):
-    """
-        x_args:
-            x_args[0] - Cpq
-        p:
-            s, psiColP, MP
-    """
-    # use dimfactor for abs_err to be reasonable
-    res = dimfactor*beta(p["s"])/32/sp.pi/p["s"]*sp.absolute(McolP({"p": mom(p["s"], m), "q": mom(p["s"]), "Cpq": x_args[0], "psiColP": p["psiColP"], "MP": p["MP"]}))**2
+        if paramdict is None:
+            return { k: getattr(self, k) for k in keylist }
 
-    return res
+        for key, val in paramdict.items():
+            if key in keylist:
+                setattr(self, key, val)
+        return True
 
-def sigma(p):
-    """
-        p:
-            s, psiColP, MP
-    """
+    def compute(self, s):
+        res, err = cubature(self.sigma_f, 1, 1, [-1], [1], args=[s], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        return res[0]
 
-    res, err = cubature(sigma_f, 1, 1, [-1], [1], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=False)
-    return res[0]
+    def sigma_f(self, x_args, s):
+        """
+            x_args:
+                x_args[0] - Cpq
+        """
+        px = x_args.T if self.vectorized else x_args
 
+        # use dimfactor for absErr to be reasonable
+        res = self.mapper(lambda x: self.CONST["dimfactor"]*beta(s)/32/sp.pi/s*sp.absolute(self.McolPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), x))**2, px[0])
 
-def sumrule_f(x_args, p):
-    """
-        x_args:
-            px[0] - s
+        return res.T if self.vectorized else res
 
-        p:
-            MP, psiColP
-    """
-    px = x_args.T
+class SumruleEvaluator:
+    def __init__(self):
+        self.CONST = mconfig
+        self.SigmaEvaluatorInstance = SigmaEvaluator()
+        self.mapper = mpMap
+        self.vectorized = True
+        self.absErr = 1e-5
+        self.relErr = 1e-3
+        self.minS = 4*self.CONST["m"]**2 + 0.01
+        self.maxS = 1000
 
-    pool = ThPool(pconfig["num_threads"])
-    sumrule_evaled = pool.map(lambda s: sigma({"s": s, "psiColP": p["psiColP"], "MP": p["MP"]})/s, px[0])
-    sumrule_evaled = sp.array(sumrule_evaled)
+    def params(self, paramdict=None):
+        keylist = ("vectorized"
+                  ,"absErr"
+                  ,"relErr"
+                  ,"minS"
+                  ,"maxS")
 
-    return sumrule_evaled.T
+        if paramdict is None:
+            return { k: getattr(self, k) for k in keylist }
 
+        for key, val in paramdict.items():
+            if key in keylist:
+                setattr(self, key, val)
+        return True
 
-def sumrule(p):
-    """
-        p:
-            MP, psiColP, minS, maxS
-    """
+    def compute(self):
+        res, err = cubature(self.sumrule_f, 1, 1, [self.minS], [self.maxS], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        return res[0]
 
-    res, err = cubature(sumrule_f, 1, 1, [p["minS"]], [p["maxS"]], args=[p], abserr=pconfig["abs_err"], relerr=pconfig["rel_err"], vectorized=True)
-    return res[0]
+    def sumrule_f(self, x_args):
+        """
+            x_args:
+                px[0] - s
+        """
+        px = x_args.T if self.vectorized else x_args
+
+        res = self.mapper(lambda s: self.SigmaEvaluatorInstance.compute(s)/s, px[0])
+
+        return res.T if self.vectorized else res
+

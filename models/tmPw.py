@@ -1,5 +1,6 @@
-from __future__ import absolute_import, division
-from builtins import * # quite boldly but simply enough
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
 
 import scipy as sp
 from scipy import special
