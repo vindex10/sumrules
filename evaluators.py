@@ -6,27 +6,24 @@ import scipy as sp
 from scipy import special
 from cubature import cubature
 
-from ..parallel import npMap, mpMap
+from .parallel import npMap
+from .analytics import mom, energ, beta, eta, coAngle
 
-from ..analytics import psiColP, sqedMP0 as MP0, sqedMP2 as MP2
-from ..analytics import mom, energ, beta, eta, coAngle
-
-from . import config as mconfig
+from . import constants
 
 class McolPEvaluator:
-    def __init__(self):
-        self.CONST = mconfig
-        self.psiColP = psiColP
-        self.MP = MP0
+    def __init__(self, mp, psicolp):
+        self.CONST = constants
+        self.psiColP = psicolp
+        self.MP = mp
         self.mapper = npMap
-        self.vectorized = True
+        self.vectorized = False
         self.maxP = 500
         self.absErr = 1e-5
         self.relErr = 1e-3
 
     def params(self, paramdict=None):
-        keylist = ("vectorized"
-                  ,"maxP"
+        keylist = ("maxP"
                   ,"absErr"
                   ,"relErr")
 
@@ -38,11 +35,7 @@ class McolPEvaluator:
                 setattr(self, key, val)
         return True
 
-    def compute(self, p, q, Cpq):
-        """
-            p (for params):
-                p, q, Cpq
-        """
+    def compute(self, p, q, Cpq, Fpq):
         res, err = cubature(self.McolP_f, 3, 2, [0, -1, 0], [self.maxP, 1, 2*sp.pi], args=[p, q, Cpq], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
         return res[0] + 1j*res[1]
 
@@ -59,18 +52,16 @@ class McolPEvaluator:
         return res
 
 class SigmaEvaluator:
-    def __init__(self):
-        self.CONST = mconfig
-        self.psiColP = psiColP
-        self.McolPEvaluatorInstance = McolPEvaluator()
+    def __init__(self, mp):
+        self.CONST = constants
+        self.MPEvaluatorInstance = mp
         self.mapper = npMap
         self.vectorized = False
         self.absErr = 1e-5
         self.relErr = 1e-3
 
     def params(self, paramdict=None):
-        keylist = ("vectorized"
-                  ,"absErr"
+        keylist = ("absErr"
                   ,"relErr")
 
         if paramdict is None:
@@ -82,35 +73,33 @@ class SigmaEvaluator:
         return True
 
     def compute(self, s):
-        res, err = cubature(self.sigma_f, 1, 1, [-1], [1], args=[s], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        res, err = cubature(self.sigma_f, 2, 1, [-1, 0], [1, 2*sp.pi], args=[s], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
         return res[0]
 
     def sigma_f(self, x_args, s):
         """
             x_args:
                 x_args[0] - Cpq
+                x_args[1] - Fpq
         """
-        px = x_args.T if self.vectorized else x_args
-
-        # use dimfactor for absErr to be reasonable
-        res = self.mapper(lambda x: self.CONST["dimfactor"]*beta(s)/32/sp.pi/s*sp.absolute(self.McolPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), x))**2, px[0])
-
-        return res.T if self.vectorized else res
+        # use dimfactor for absErr to be reasonable.
+        # Assuming Fpq contributes only as phase => force Fpq = 0
+        res = self.mapper(lambda px: self.CONST["dimfactor"]*beta(s)/64/sp.pi**2/s*sp.absolute(self.MPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), px[0], px[1]))**2, x_args)
+        return res
 
 class SumruleEvaluator:
-    def __init__(self):
-        self.CONST = mconfig
-        self.SigmaEvaluatorInstance = SigmaEvaluator()
-        self.mapper = mpMap
-        self.vectorized = True
+    def __init__(self, sigma):
+        self.CONST = constants
+        self.SigmaEvaluatorInstance = sigma
+        self.mapper = npMap
+        self.vectorized = False
         self.absErr = 1e-5
         self.relErr = 1e-3
         self.minS = 4*self.CONST["m"]**2 + 0.01
         self.maxS = 1000
 
     def params(self, paramdict=None):
-        keylist = ("vectorized"
-                  ,"absErr"
+        keylist = ("absErr"
                   ,"relErr"
                   ,"minS"
                   ,"maxS")
@@ -132,9 +121,18 @@ class SumruleEvaluator:
             x_args:
                 px[0] - s
         """
-        px = x_args.T if self.vectorized else x_args
+        res = self.mapper(lambda s: self.SigmaEvaluatorInstance.compute(s)/s, x_args)
 
-        res = self.mapper(lambda s: self.SigmaEvaluatorInstance.compute(s)/s, px[0])
+        return res
 
-        return res.T if self.vectorized else res
+class TrivialEvaluator:
+    def __init__(self, func):
+        self.func = func
 
+    def compute(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def params(self, paramdict=None):
+        if paramdict is None:
+            return dict()
+        return True
