@@ -84,7 +84,7 @@ class SigmaEvaluator:
         """
         # use dimfactor for absErr to be reasonable.
         # Assuming Fpq contributes only as phase => force Fpq = 0
-        res = self.mapper(lambda px: self.CONST["dimfactor"]*beta(s)/64/sp.pi**2/s*sp.absolute(self.MPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), px[0], px[1]))**2, x_args)
+        res = self.mapper(lambda px: self.CONST["dimfactor"]*self.CONST["Nc"]*beta(s)/64/sp.pi**2/s*sp.absolute(self.MPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), px[0], px[1]))**2, x_args)
         return res
 
 class SumruleEvaluator:

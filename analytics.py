@@ -27,10 +27,10 @@ def tmMP(q, p, Cqp, Fpq):
     return 1/(q**2 + p**2 - 2*p*q*Cqp + CONST["m"]**2) + 1/(q**2 + p**2 + 2*q*p*Cqp + CONST["m"]**2)
 
 def sqedMP0(p, q, Cpq, Fpq):
-    return 2j*CONST["e1"]**2*(1 - p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + CONST["m"]**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + CONST["m"]**2)))
+    return 2j*CONST["e"]**2*(1 - p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + CONST["m"]**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + CONST["m"]**2)))
 
 def sqedMP2(p, q, Cpq, Fpq):
-    return 2j*CONST["e1"]**2*p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + CONST["m"]**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + CONST["m"]**2))*sp.exp(2j*Fpq)
+    return 2j*CONST["e"]**2*p**2*(1-Cpq**2)*(1/(p**2 + q**2 - 2*p*q*Cpq + CONST["m"]**2) + 1/(p**2 + q**2 + 2*p*q*Cpq + CONST["m"]**2))*sp.exp(2j*Fpq)
 
 # Wave functions
 def psiColP(k, p, Ckp):
