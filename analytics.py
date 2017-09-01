@@ -14,7 +14,7 @@ def beta(s):
     return sp.sqrt(1 - 4*CONST["m"]**2/s)
 
 def eta(k):
-    return CONST["mu"]*CONST["g"]/k
+    return CONST["m"]*CONST["g"]/2/k
 
 def coAngle(Cpq, Cpr, Fqr):
     return Cpq*Cpr + sp.sqrt(1 - Cpq**2)*sp.sqrt(1 - Cpr**2)*sp.cos(Fqr)
