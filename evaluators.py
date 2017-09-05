@@ -11,6 +11,16 @@ from .analytics import mom, energ, beta, eta, coAngle
 
 from . import constants
 
+def stackArgRes(args, res):
+    isVec = True if len(args.shape) == 2 else False
+    
+    if not isVec and len(res.shape) == 0:
+            return sp.hstack((args, sp.array((res,))))
+    elif isVec and len(res.shape) == 1:
+            return sp.hstack((args, res.reshape(res.shape[0], 1)))
+    else:
+            return sp.hstack((args, res))
+
 class McolPEvaluator:
     def __init__(self, mp, psicolp):
         self.CONST = constants
@@ -18,6 +28,7 @@ class McolPEvaluator:
         self.MP = mp
         self.mapper = npMap
         self.vectorized = False
+        self.monitor = None
         self.maxP = 500
         self.absErr = 1e-5
         self.relErr = 1e-3
@@ -49,6 +60,9 @@ class McolPEvaluator:
         res = self.mapper(lambda px: px[0]**2/(2*sp.pi)**3*(energ(p, self.CONST["m"])/energ(px[0], self.CONST["m"]))*sp.conj(self.psiColP(p, px[0], coAngle(Cpq, px[1], px[2])))*self.MP(px[0], q, px[1], px[2]), x_args)
         res = sp.array((sp.real(res), sp.imag(res))).T
 
+        if self.monitor is not None:
+            self.monitor.push(stackArgRes(x_args, res))
+        
         return res
 
 class SigmaEvaluator:
@@ -57,6 +71,7 @@ class SigmaEvaluator:
         self.MPEvaluatorInstance = mp
         self.mapper = npMap
         self.vectorized = False
+        self.monitor = None
         self.absErr = 1e-5
         self.relErr = 1e-3
 
@@ -83,8 +98,11 @@ class SigmaEvaluator:
                 x_args[1] - Fpq
         """
         # use dimfactor for absErr to be reasonable.
-        # Assuming Fpq contributes only as phase => force Fpq = 0
         res = self.mapper(lambda px: self.CONST["dimfactor"]*self.CONST["Nc"]*beta(s)/64/sp.pi**2/s*sp.absolute(self.MPEvaluatorInstance.compute(mom(s, self.CONST["m"]), mom(s), px[0], px[1]))**2, x_args)
+
+        if self.monitor is not None:
+            self.monitor.push(stackArgRes(x_args, res))
+
         return res
 
 class SumruleEvaluator:
@@ -93,6 +111,7 @@ class SumruleEvaluator:
         self.SigmaEvaluatorInstance = sigma
         self.mapper = npMap
         self.vectorized = False
+        self.monitor = None
         self.absErr = 1e-5
         self.relErr = 1e-3
         self.minS = 4*self.CONST["m"]**2 + 0.01
@@ -121,16 +140,28 @@ class SumruleEvaluator:
             x_args:
                 px[0] - s
         """
-        res = self.mapper(lambda s: self.SigmaEvaluatorInstance.compute(s)/s, x_args)
+        res = self.mapper(lambda s:\
+                self.SigmaEvaluatorInstance.compute(s)/s, x_args)
+
+        if self.monitor is not None:
+            self.monitor.push(stackArgRes(x_args, res))
 
         return res
 
 class TrivialEvaluator:
     def __init__(self, func):
         self.func = func
+        self.monitor = None
 
     def compute(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+        res = self.func(*args, **kwargs)
+
+        if self.monitor is not None:
+            adaptedArgs = sp.column_stack(sp.broadcast(*args)).T
+            self.monitor.push(stackArgRes(adaptedArgs, res))
+
+
+        return res
 
     def params(self, paramdict=None):
         if paramdict is None:

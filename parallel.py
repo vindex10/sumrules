@@ -9,3 +9,6 @@ def mpMap(f, data):
 
 def npMap(f, data):
     return f(data.T).T
+
+def pyMap(f, data):
+    return sp.hstack(list(map(f, data)))
