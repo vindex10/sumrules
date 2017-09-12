@@ -129,7 +129,7 @@ class McolPDiscEvaluator:
         
         return res
 
-class GammaEvaluator:
+class GammaDiscEvaluator:
     def __init__(self, mp):
         self.CONST = constants
         self.MPEvaluatorInstance = mp

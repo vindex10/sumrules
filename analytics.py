@@ -59,6 +59,10 @@ def psiColP(k, p, Tkp):
             )
 
 def psiColPdisc(n, l, M, p, Tpq, Fpq):
+    if M not in range(-l, l+1):
+        return 0
+    if l not in range(n):
+        return 0
     return (-1j)**l *(4*sp.pi) *2**(2*(l+1)) *sp.misc.factorial(l)/(n+l)**2\
             *sp.sqrt(sp.special.factorial(n-1)/sp.special.factorial(n+2*l))\
             *(2/CONST["m"]/CONST["g"])**(3/2)*((p*(2/CONST["m"]/CONST["g"]))/(n+l))**l\
