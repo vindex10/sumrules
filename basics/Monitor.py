@@ -17,7 +17,9 @@ class Monitor(object):
             for entry in data:
                 out += " ".join(map(str, entry))+msg+"\n"
         self.fd.write(out)
+        self.fd.flush()
     
     def comment(self, msg):
         self.fd.write("#%s\n" % msg)
+        self.fd.flush()
 
