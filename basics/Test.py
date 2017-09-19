@@ -1,14 +1,18 @@
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 from getopt import getopt, GetoptError
 from sys import argv
 
-from .BasicConfigManager import ConfigManager
+from . import BasicConfigManager
 
 class Test(object):
     def __init__(self, title="unnamed"):
         self.title = title
         self.configPath = title+".conf"
-        self.config = ConfigManager()
+        self.config = BasicConfigManager()
         self.config.register(self, "TEST")
         self.interactive = False
         self.outputPath = os.path.join("output", title)

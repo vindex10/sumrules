@@ -1,6 +1,11 @@
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import scipy as sp
+
 import multiprocessing.dummy
-from . import config
+from .. import config
 
 def mpMap(f, data):
     pool = multiprocessing.dummy.Pool(config["numThreads"])

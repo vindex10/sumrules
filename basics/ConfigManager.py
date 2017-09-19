@@ -1,7 +1,11 @@
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+from builtins import *
+
 import os
 import re
 
-class ConfigManager:
+class ConfigManager(object):
     def __init__(self):
         self._prefre = re.compile("^([A-Z0-9]+)_")
         self.watching = dict()

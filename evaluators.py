@@ -6,48 +6,53 @@ import scipy as sp
 from scipy import special
 from cubature import cubature
 
-from .parallel import npMap, pyMap
+from .basics import BasicEvaluator, BasicIntegrator
+from .utils.evutils import stackArgRes
+
+from .utils.parallel import npMap, pyMap
 from .analytics import mom, energ, beta, eta, coAngle
 
 from . import constants
 
-def stackArgRes(args, res):
-    isVec = True if len(args.shape) == 2 else False
-    
-    if not isVec and len(res.shape) == 0:
-            return sp.hstack((args, sp.array((res,))))
-    elif isVec and len(res.shape) == 1:
-            return sp.hstack((args, res.reshape(res.shape[0], 1)))
-    else:
-            return sp.hstack((args, res))
-
-class McolPEvaluator:
+class McolPEvaluator(BasicIntegrator):
     def __init__(self, mp, psicolp):
-        self.CONST = constants
+        super(McolPEvaluator, self).__init__()
+        self._keylist += ["maxP"
+                         ,"absErr"
+                         ,"relErr"]
+
+        self.vectorized = False
+
+        self.area = sp.array([[0, 500], [0, sp.pi], [0, 2*sp.pi]])
         self.psiColP = psicolp
         self.MP = mp
-        self.mapper = npMap
-        self.vectorized = False
-        self.monitor = None
-        self.maxP = 500
+
         self.absErr = 1e-5
         self.relErr = 1e-3
 
-    def params(self, paramdict=None):
-        keylist = ("maxP"
-                  ,"absErr"
-                  ,"relErr")
+    def params(self, params=None):
+        suparams = super(McolPEvaluator, self).params(params)
 
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
+        if params is None:
+            suparams.update({"maxP": self.area[0][1]})
+            return suparams
 
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
+        if "maxP" in params.keys():
+            self.area[0][1] = params["maxP"]
+        
         return True
 
     def compute(self, p, q, Tpq, Fpq):
-        res, err = cubature(self.McolP_f, 3, 2, [0, 0, 0], [self.maxP, sp.pi, 2*sp.pi], args=[p, q, Tpq], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        area = self.areaCyclics()
+
+        res, err = cubature(self.McolP_f\
+                          , area.shape[0], 2\
+                          , area.T[0]\
+                          , area.T[1]\
+                          , args=[p, q, Tpq]\
+                          , abserr=self.absErr, relerr=self.relErr\
+                          , vectorized=self.vectorized)
+
         return res[0] + 1j*res[1]
 
     def McolP_f(self, x_args, p, q, Tpq):
@@ -57,50 +62,63 @@ class McolPEvaluator:
                 px[1] for theta(px,p)
                 px[2] for phi
         """
+        x_args = self.xargsCyclics(x_args)
+
         res = self.mapper(lambda px:\
                     sp.sin(px[1])\
                     *px[0]**2/(2*sp.pi)**3*(energ(p, self.CONST["m"])/energ(px[0], self.CONST["m"]))\
                     *sp.conj(self.psiColP(p, px[0], coAngle(sp.cos(Tpq), sp.cos(px[1]), px[2])))\
                     *self.MP(px[0], q, px[1], px[2])\
                 , x_args)
-        res = sp.array((sp.real(res), sp.imag(res))).T
+        res = self.cyclicPrefactor()*sp.array((sp.real(res), sp.imag(res))).T
 
         if self.monitor is not None:
-            self.monitor.push(stackArgRes(x_args, res))
+            self.monitor.push(stackArgRes(x_args, res, sp.array((p, q, Tpq))))
         
         return res
 
-class McolPDiscEvaluator:
+
+class McolPDiscEvaluator(BasicIntegrator):
     def __init__(self, mp, psicolp, denerg):
-        self.CONST = constants
+        super(McolPDiscEvaluator, self).__init__()
+        self._keylist += ["maxP"
+                         ,"absErr"
+                         ,"relErr"]
+
+        self.vectorized = False
+
         self.psiColP = psicolp
         self.denerg = denerg
         self.MP = mp
         
-        self.mapper = npMap
-        self.vectorized = False
-        self.monitor = None
-
-        self.maxP = 1000
-        # be careful with precision, I spent some time to find out its importans
+        self.area = sp.array([[0, 500], [0, sp.pi], [0, 2*sp.pi]])
+        # be careful with precision, I spent some time to find out its importance
         self.absErr = 1e-10
         self.relErr = 1e-8
 
-    def params(self, paramdict=None):
-        keylist = ("maxP"
-                  ,"absErr"
-                  ,"relErr")
+    def params(self, params=None):
+        suparams = super(McolPDiscEvaluator, self).params(params)
 
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
+        if params is None:
+            suparams.update({"maxP": self.area[0][1]})
+            return suparams
 
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
+        if "maxP" in params.keys():
+            self.area[0][1] = params["maxP"]
+        
         return True
 
     def compute(self, n, l):
-        res, err = cubature(self.McolP_f, 3, 2, [0, 0, 0], [self.maxP, sp.pi, 2*sp.pi], args=[n, l], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        area = self.areaCyclics()
+
+        res, err = cubature(self.McolP_f\
+                          , area.shape[0], 2\
+                          , area.T[0]\
+                          , area.T[1]\
+                          , args=[n, l]\
+                          , abserr=self.absErr, relerr=self.relErr\
+                          , vectorized=self.vectorized)
+        
         return res[0] + 1j*res[1]
 
     def McolP_f(self, x_args, n, l):
@@ -110,7 +128,9 @@ class McolPDiscEvaluator:
                 px[1] for theta(px,p)
                 px[2] for phi
         """
-        res = self.mapper(lambda px:\
+        x_args = self.xargsCyclics(x_args)
+
+        res = self.cyclicPrefactor()*self.mapper(lambda px:\
                     sp.sin(px[1])\
                     *px[0]**2/(2*sp.pi)**3\
                     *sp.sqrt(self.denerg(n, l)/2)/energ(px[0], self.CONST["m"])\
@@ -122,33 +142,19 @@ class McolPDiscEvaluator:
                               , px[1], px[2])\
                     )\
                 , x_args)
-        res = sp.array((sp.real(res), sp.imag(res))).T
+        res = self.cyclicPrefactor()*sp.array((sp.real(res), sp.imag(res))).T
 
         if self.monitor is not None:
-            self.monitor.push(stackArgRes(x_args, res))
+            self.monitor.push(stackArgRes(x_args, res, sp.array((n,l))))
         
         return res
 
-class GammaDiscEvaluator:
+
+class GammaDiscEvaluator(BasicEvaluator):
     def __init__(self, mp):
-        self.CONST = constants
+        super(GammaDiscEvaluator, self).__init__()
         self.MPEvaluatorInstance = mp
         self.denerg = self.MPEvaluatorInstance.denerg
-        self.monitor = None
-        self.absErr = 1e-5
-        self.relErr = 1e-3
-
-    def params(self, paramdict=None):
-        keylist = ("absErr"
-                  ,"relErr")
-
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
-
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
-        return True
 
     def compute(self, n, l):
         res = self.CONST["dimfactor"]*self.CONST["Nc"]/(2*l+1)\
@@ -160,30 +166,32 @@ class GammaDiscEvaluator:
 
         return res
 
-class SigmaEvaluator:
+
+class SigmaEvaluator(BasicIntegrator):
     def __init__(self, mp):
-        self.CONST = constants
-        self.MPEvaluatorInstance = mp
-        self.mapper = npMap
+        super(SigmaEvaluator, self).__init__()
+        self._keylist += ["absErr"
+                         ,"relErr"]
+
         self.vectorized = False
-        self.monitor = None
+        
+        self.area = sp.array(((0, sp.pi), (0, 2*sp.pi)))
+        self.MPEvaluatorInstance = mp
+
         self.absErr = 1e-5
         self.relErr = 1e-3
 
-    def params(self, paramdict=None):
-        keylist = ("absErr"
-                  ,"relErr")
-
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
-
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
-        return True
-
     def compute(self, s):
-        res, err = cubature(self.sigma_f, 2, 1, [0, 0], [sp.pi, 2*sp.pi], args=[s], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        area = self.areaCyclics()
+
+        res, err = cubature(self.sigma_f\
+                          , area.shape[0], 1\
+                          , area.T[0]\
+                          , area.T[1]\
+                          , args=[s]\
+                          , abserr=self.absErr, relerr=self.relErr\
+                          , vectorized=self.vectorized)
+        
         return res[0]
 
     def sigma_f(self, x_args, s):
@@ -192,6 +200,8 @@ class SigmaEvaluator:
                 x_args[0] - Tpq
                 x_args[1] - Fpq
         """
+        x_args = self.xargsCyclics(x_args)
+
         # use dimfactor for absErr to be reasonable.
         res = self.mapper(lambda px:\
                 sp.sin(px[0])\
@@ -203,40 +213,54 @@ class SigmaEvaluator:
                                                             , px[1])\
                             )**2\
                 , x_args)
+        res *= self.cyclicPrefactor()
 
         if self.monitor is not None:
-            self.monitor.push(stackArgRes(x_args, res))
+            self.monitor.push(stackArgRes(x_args, res, sp.array((s,))))
 
         return res
 
-class SumruleEvaluator:
+
+class SumruleEvaluator(BasicIntegrator):
     def __init__(self, sigma):
-        self.CONST = constants
-        self.SigmaEvaluatorInstance = sigma
-        self.mapper = npMap
+        super(SumruleEvaluator, self).__init__()
+        self._keylist += ["absErr"
+                         ,"relErr"
+                         ,"minS"
+                         ,"maxS"]
+
         self.vectorized = False
-        self.monitor = None
+        
+        self.area = sp.array([[4*self.CONST["m"]**2 + 0.01
+                             ,1000]])
+        self.SigmaEvaluatorInstance = sigma
+        
         self.absErr = 1e-5
         self.relErr = 1e-3
-        self.minS = 4*self.CONST["m"]**2 + 0.01
-        self.maxS = 1000
 
-    def params(self, paramdict=None):
-        keylist = ("absErr"
-                  ,"relErr"
-                  ,"minS"
-                  ,"maxS")
+    def params(self, params=None):
+        suparams = super(SumruleEvaluator, self).params(params)
 
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
+        if params is None:
+            suparams.update({"minS": self.area[0][0]
+                            ,"maxS": self.area[0][1]})
+            return suparams
 
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
+        if "minS" in params.keys():
+            self.area[0][1] = params["minS"]
+        if "maxS" in params.keys():
+            self.area[0][1] = params["maxS"]
+        
         return True
 
     def compute(self):
-        res, err = cubature(self.sumrule_f, 1, 1, [self.minS], [self.maxS], abserr=self.absErr, relerr=self.relErr, vectorized=self.vectorized)
+        area = self.areaCyclics()
+        res, err = cubature(self.sumrule_f\
+                          , area.shape[0], 1\
+                          , area.T[0]\
+                          , area.T[1]\
+                          , abserr=self.absErr, relerr=self.relErr\
+                          , vectorized=self.vectorized)
         return res[0]
 
     def sumrule_f(self, x_args):
@@ -244,34 +268,29 @@ class SumruleEvaluator:
             x_args:
                 px[0] - s
         """
+        x_args = self.xargsCyclics(x_args)
+
         res = self.mapper(lambda s:\
                 self.SigmaEvaluatorInstance.compute(s)/s, x_args)
+        res *= self.cyclicPrefactor()
 
         if self.monitor is not None:
             self.monitor.push(stackArgRes(x_args, res))
 
         return res
 
-class SumruleDiscEvaluator:
+
+class SumruleDiscEvaluator(BasicEvaluator):
     def __init__(self, gamma):
-        self.CONST = constants
+        super(SumruleDiscEvaluator, self).__init__()
+        self._keylist += ["nMax"]
+
+        self.vectorized = False
+
         self.GammaEvaluatorInstance = gamma
         self.denerg = self.GammaEvaluatorInstance.denerg
-        self.mapper = pyMap
-        self.vectorized = False
-        self.monitor = None
+
         self.nMax = 1
-
-    def params(self, paramdict=None):
-        keylist = ("nMax",)
-
-        if paramdict is None:
-            return { k: getattr(self, k) for k in keylist }
-
-        for key, val in paramdict.items():
-            if key in keylist:
-                setattr(self, key, val)
-        return True
 
     def compute(self):
         res = sum(self.mapper(\
@@ -287,10 +306,10 @@ class SumruleDiscEvaluator:
         return res
 
 
-class TrivialEvaluator:
+class TrivialEvaluator(BasicEvaluator):
     def __init__(self, func):
+        super(TrivialEvaluator, self).__init__()
         self.func = func
-        self.monitor = None
 
     def compute(self, *args, **kwargs):
         res = self.func(*args, **kwargs)
@@ -299,10 +318,5 @@ class TrivialEvaluator:
             adaptedArgs = sp.column_stack(sp.broadcast(*args)).T
             self.monitor.push(stackArgRes(adaptedArgs, res))
 
-
         return res
 
-    def params(self, paramdict=None):
-        if paramdict is None:
-            return dict()
-        return True
