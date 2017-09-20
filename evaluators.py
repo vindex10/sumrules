@@ -270,8 +270,8 @@ class SumruleEvaluator(BasicIntegrator):
         """
         x_args = self.xargsCyclics(x_args)
 
-        res = self.mapper(lambda s:\
-                self.SigmaEvaluatorInstance.compute(s)/s, x_args)
+        res = self.mapper(lambda px:\
+                self.SigmaEvaluatorInstance.compute(px[0])/px[0], x_args)
         res *= self.cyclicPrefactor()
 
         if self.monitor is not None:
