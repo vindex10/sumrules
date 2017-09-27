@@ -6,8 +6,10 @@ import os
 import re
 
 class ConfigManager(object):
+    _prefre = re.compile("^([A-Z0-9]+)_")
+    _cfgre = re.compile("([^=\s]+)\s*=\s*(?:\"(.+)\"|'(.+)'|([^\s]+))")
+
     def __init__(self):
-        self._prefre = re.compile("^([A-Z0-9]+)_")
         self.watching = dict()
 
     def register(self, module, prefix):
@@ -30,7 +32,7 @@ class ConfigManager(object):
         for key in self.watching[prefix].params().keys():
             entry = prefix+"_"+key
             if entry in os.environ.keys():
-                updict.update({key: self._parseStr(os.environ[entry])})
+                updict.update({key: self.parseStr(os.environ[entry])})
         self.watching[prefix].params(updict)
 
 
@@ -42,17 +44,16 @@ class ConfigManager(object):
 
         try:
             with open(filename) as f:
-                patt = re.compile("([^=\s]+)\s*=\s*(?:\"(.+)\"|'(.+)'|([^\s]+))")
                 updict = dict()
                 for line in f:
-                    matching = patt.match(line)
+                    matching = self._cfgre.match(line)
                     if not matching:
                         continue
-                    pair = [v for v in patt.match(line).groups() if v is not None]
+                    pair = [v for v in self._cfgre.match(line).groups() if v is not None]
                     if len(pair) > 0:
                         parsed = self._entryToPair(pair[0])
                         if parsed and parsed[0] == prefix:
-                            updict.update({parsed[1]: self._parseStr(pair[1])})
+                            updict.update({parsed[1]: self.parseStr(pair[1])})
             self.watching[prefix].params(updict)
         except (FileNotFoundError, TypeError):
             pass
@@ -85,7 +86,8 @@ class ConfigManager(object):
         prefix = match.groups()[0]
         return (prefix, entry[len(prefix)+1:])
 
-    def _parseStr(self, a):
+    @staticmethod
+    def _parseStr(a):
         if a == "True":
             return True
 
