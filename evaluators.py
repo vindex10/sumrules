@@ -247,7 +247,7 @@ class SumruleEvaluator(BasicIntegrator):
             return suparams
 
         if "minS" in params.keys():
-            self.area[0][1] = params["minS"]
+            self.area[0][0] = params["minS"]
         if "maxS" in params.keys():
             self.area[0][1] = params["maxS"]
         
