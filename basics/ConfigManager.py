@@ -32,7 +32,7 @@ class ConfigManager(object):
         for key in self.watching[prefix].params().keys():
             entry = prefix+"_"+key
             if entry in os.environ.keys():
-                updict.update({key: self.parseStr(os.environ[entry])})
+                updict.update({key: self._parseStr(os.environ[entry])})
         self.watching[prefix].params(updict)
 
 
@@ -53,7 +53,7 @@ class ConfigManager(object):
                     if len(pair) > 0:
                         parsed = self._entryToPair(pair[0])
                         if parsed and parsed[0] == prefix:
-                            updict.update({parsed[1]: self.parseStr(pair[1])})
+                            updict.update({parsed[1]: self._parseStr(pair[1])})
             self.watching[prefix].params(updict)
         except (FileNotFoundError, TypeError):
             pass
