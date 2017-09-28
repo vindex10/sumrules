@@ -6,8 +6,10 @@ import os
 import re
 
 class ConfigManager(object):
+    _prefre = re.compile("^([A-Z0-9]+)_")
+    _cfgre = re.compile("([^=\s]+)\s*=\s*(?:\"(.+)\"|'(.+)'|([^\s]+))")
+
     def __init__(self):
-        self._prefre = re.compile("^([A-Z0-9]+)_")
         self.watching = dict()
 
     def register(self, module, prefix):
@@ -42,13 +44,12 @@ class ConfigManager(object):
 
         try:
             with open(filename) as f:
-                patt = re.compile("([^=\s]+)\s*=\s*(?:\"(.+)\"|'(.+)'|([^\s]+))")
                 updict = dict()
                 for line in f:
-                    matching = patt.match(line)
+                    matching = self._cfgre.match(line)
                     if not matching:
                         continue
-                    pair = [v for v in patt.match(line).groups() if v is not None]
+                    pair = [v for v in self._cfgre.match(line).groups() if v is not None]
                     if len(pair) > 0:
                         parsed = self._entryToPair(pair[0])
                         if parsed and parsed[0] == prefix:
@@ -85,7 +86,8 @@ class ConfigManager(object):
         prefix = match.groups()[0]
         return (prefix, entry[len(prefix)+1:])
 
-    def _parseStr(self, a):
+    @staticmethod
+    def _parseStr(a):
         if a == "True":
             return True
 
