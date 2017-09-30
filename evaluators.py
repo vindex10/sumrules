@@ -21,8 +21,6 @@ class McolPEvaluator(BasicIntegrator):
                          ,"absErr"
                          ,"relErr"]
 
-        self.vectorized = False
-
         self.area = sp.array([[0, 500], [0, sp.pi], [0, 2*sp.pi]])
         self.psiColP = psicolp
         self.MP = mp
@@ -64,7 +62,7 @@ class McolPEvaluator(BasicIntegrator):
         """
         x_args = self.xargsCyclics(x_args)
 
-        res = self.mapper(lambda px:\
+        res = self.cubMap(lambda px:\
                     sp.sin(px[1])\
                     *px[0]**2/(2*sp.pi)**3*(energ(p, self.CONST["m"])/energ(px[0], self.CONST["m"]))\
                     *sp.conj(self.psiColP(p, px[0], coAngle(sp.cos(Tpq), sp.cos(px[1]), px[2])))\
@@ -84,8 +82,6 @@ class McolPDiscEvaluator(BasicIntegrator):
         self._keylist += ["maxP"
                          ,"absErr"
                          ,"relErr"]
-
-        self.vectorized = False
 
         self.psiColP = psicolp
         self.denerg = denerg
@@ -130,7 +126,7 @@ class McolPDiscEvaluator(BasicIntegrator):
         """
         x_args = self.xargsCyclics(x_args)
 
-        res = self.cyclicPrefactor()*self.mapper(lambda px:\
+        res = self.cyclicPrefactor()*self.cubMap(lambda px:\
                     sp.sin(px[1])\
                     *px[0]**2/(2*sp.pi)**3\
                     *sp.sqrt(self.denerg(n, l)/2)/energ(px[0], self.CONST["m"])\
@@ -173,8 +169,6 @@ class SigmaEvaluator(BasicIntegrator):
         self._keylist += ["absErr"
                          ,"relErr"]
 
-        self.vectorized = False
-        
         self.area = sp.array(((0, sp.pi), (0, 2*sp.pi)))
         self.MPEvaluatorInstance = mp
 
@@ -203,7 +197,7 @@ class SigmaEvaluator(BasicIntegrator):
         x_args = self.xargsCyclics(x_args)
 
         # use dimfactor for absErr to be reasonable.
-        res = self.mapper(lambda px:\
+        res = self.cubMap(lambda px:\
                 sp.sin(px[0])\
                 *self.CONST["dimfactor"]*self.CONST["Nc"]*beta(s)/64/sp.pi**2/s\
                 *sp.absolute(\
@@ -229,8 +223,6 @@ class SumruleEvaluator(BasicIntegrator):
                          ,"minS"
                          ,"maxS"]
 
-        self.vectorized = False
-        
         self.area = sp.array([[4*self.CONST["m"]**2 + 0.01
                              ,1000]])
         self.SigmaEvaluatorInstance = sigma
@@ -270,7 +262,7 @@ class SumruleEvaluator(BasicIntegrator):
         """
         x_args = self.xargsCyclics(x_args)
 
-        res = self.mapper(lambda px:\
+        res = self.cubMap(lambda px:\
                 self.SigmaEvaluatorInstance.compute(px[0])/px[0], x_args)
         res *= self.cyclicPrefactor()
 
@@ -285,12 +277,10 @@ class SumruleDiscEvaluator(BasicEvaluator):
         super(SumruleDiscEvaluator, self).__init__()
         self._keylist += ["nMax"]
 
-        self.vectorized = False
-
         self.GammaEvaluatorInstance = gamma
         self.denerg = self.GammaEvaluatorInstance.denerg
 
-        self.nMax = 1
+        self.nMax = 10
 
     def compute(self):
         res = sum(self.mapper(\

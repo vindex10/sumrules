@@ -10,11 +10,18 @@ from .. import constants
 class Integrator(BasicEvaluator):
     def __init__(self):
         super(Integrator, self).__init__()
+        self.vectorized = False
         self.area = list()
         self.cyclics = dict()
 
     def areaCyclics(self):
         return sp.delete(self.area, list(self.cyclics.keys()), axis=0)
+    
+    def cubMap(self, func, args):
+        if self.vectorized:
+            return self.mapper(func, args)
+        else:
+            return func(args)
 
     def xargsCyclics(self, x_args):
         isVec = len(x_args.shape) == 2
