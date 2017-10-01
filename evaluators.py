@@ -47,13 +47,13 @@ class McolPEvaluator(BasicIntegrator):
                           , area.shape[0], 2\
                           , area.T[0]\
                           , area.T[1]\
-                          , args=[p, q, Tpq]\
+                          , args=[p, q, Tpq, Fpq]\
                           , abserr=self.absErr, relerr=self.relErr\
                           , vectorized=self.vectorized)
 
         return res[0] + 1j*res[1]
 
-    def McolP_f(self, x_args, p, q, Tpq):
+    def McolP_f(self, x_args, p, q, Tpq, Fpq):
         """
             x_args:
                 px[0] for px
@@ -65,7 +65,7 @@ class McolPEvaluator(BasicIntegrator):
         res = self.cubMap(lambda px:\
                     sp.sin(px[1])\
                     *px[0]**2/(2*sp.pi)**3*(energ(p, self.CONST["m"])/energ(px[0], self.CONST["m"]))\
-                    *sp.conj(self.psiColP(p, px[0], coAngle(sp.cos(Tpq), sp.cos(px[1]), px[2])))\
+                    *sp.conj(self.psiColP(p, px[0], sp.arccos(coAngle(sp.cos(Tpq), sp.cos(px[1]), px[2]-Fpq))))\
                     *self.MP(px[0], q, px[1], px[2])\
                 , x_args)
         res = self.cyclicPrefactor()*sp.array((sp.real(res), sp.imag(res))).T
