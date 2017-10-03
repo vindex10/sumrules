@@ -2,17 +2,17 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
+import getopt
 import os
-from getopt import getopt, GetoptError
-from sys import argv
+import sys
 
-from . import BasicConfigManager
+from .ConfigManager import ConfigManager
 
 class Test(object):
     def __init__(self, title="unnamed"):
         self.title = title
         self.configPath = title+".conf"
-        self.config = BasicConfigManager()
+        self.config = ConfigManager()
         self.config.register(self, "TEST")
         self.interactive = False
         self.outputPath = os.path.join("output", title)
@@ -24,8 +24,8 @@ class Test(object):
 
     def parseCmd(self):
         try:
-            opts, args = getopt(argv[1:], "c:", ["config="])
-        except GetoptError:
+            opts, args = getopt.gnu_getopt(sys.argv[1:], "c:", ["config="])
+        except getopt.GetoptError:
             return False
         for opt, arg in opts:
             if opt in ("-c", "--config"):

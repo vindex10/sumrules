@@ -6,7 +6,7 @@ import scipy as sp
 from scipy import special
 from scipy import misc
 
-from . import constants as CONST
+from .. import constants as CONST
 
 # Kinematics
 def mom(s, m=0):
@@ -74,8 +74,8 @@ def psiColPdisc(n, l, M, p, Tpq, Fpq):
             *(2/CONST["m"]/(-CONST["g"]))**(3/2)*((p*(2/CONST["m"]/(-CONST["g"])))/(n+l))**l\
             /(((2/CONST["m"]/(-CONST["g"]))*p)**2 + 1/(n+l)**2)**(2+l)\
             *sp.special.eval_gegenbauer(n-1\
-                                      , l+1\
-                                      , ((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 - 1)\
+                                       ,l+1\
+                                       ,((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 - 1)\
                                         /((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 + 1))\
             *sp.special.sph_harm(M, l, Fpq, Tpq)
 

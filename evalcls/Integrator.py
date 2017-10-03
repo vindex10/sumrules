@@ -4,10 +4,10 @@ from builtins import *
 
 import scipy as sp
 
-from . import BasicEvaluator
+from .Evaluator import Evaluator
 from .. import constants
 
-class Integrator(BasicEvaluator):
+class Integrator(Evaluator):
     def __init__(self):
         super(Integrator, self).__init__()
         self.vectorized = False

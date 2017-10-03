@@ -2,14 +2,14 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
-from ..utils.parallel import npMap
+from ..utils import parallel
 from .. import constants
 
 class Evaluator(object):
     def __init__(self):
         self.CONST = constants
         self.monitor = None
-        self.mapper = npMap
+        self.mapper = parallel.pyMap
         self._keylist = list()
 
     def params(self, paramdict=None):
