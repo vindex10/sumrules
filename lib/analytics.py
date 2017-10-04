@@ -1,3 +1,7 @@
+"""@file
+Stores analytical expressions needed for computation.
+"""
+
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
@@ -10,31 +14,171 @@ from .. import constants as CONST
 
 # Kinematics
 def mom(s, m=0):
+    """Returns momentum of a particle
+    
+    Get absolute value of momentum of a particle in c.o.m. frame.
+
+    @f[
+       p = \sqrt{\frac{s}{4} - m^2}
+    @f]
+
+    Args:
+        s: Mandelstam variable. \f$ s = (p_1 + p_2)^2 = (p_3 + p_4)^2 \f$
+
+    Kwargs:
+        m: Mass of the particle
+
+    Returns:
+        Float number, absolute value of momentum of a particle.
+    """
     return sp.sqrt(s/4 - m**2)
 
 def energ(p, m=0):
+    """Energy of relativistic particle
+
+    @f[
+        E = \sqrt{p^2 + m^2}
+    @f]
+
+    Args:
+        p: Momentum of a particle
+    
+    Kwargs:
+        m: Mass of a particle
+    
+    Returns:
+        Float number, energy of a relativistic particle.
+    """
     return sp.sqrt(p**2 + m**2)
 
 def beta(s):
+    """Inverse velocity of particles in the process
+    
+    @f[
+        \beta(s) = \sqrt{1 - \frac{4 m^2}{s}} = \frac{2}{v_{cm}}
+    @f]
+
+    Args:
+        s: Mandelstam variable characterizing process. \f$ s = (p_1 + p_2)^2 = (p_3 + p_4)^2 \f$
+
+    Returns:
+        Float number, doubled inverse velocity.
+
+    See Also:
+        m: sumrules::constants
+    """
     return sp.sqrt(1 - 4*CONST["m"]**2/s)
 
 def eta(k):
+    """Sommerfeld enhancement factor
+
+    @f[
+        \eta = \frac{m g}{2 k} = \frac{\mu g}{k}
+    @f]
+
+    Args:
+        k: Momentum of the particle
+
+    Returns:
+        Float number. Sommerfeld enhancement.
+
+    See Also:
+        m: sumrules::constants
+        g: sumrules::constants
+    """
     return CONST["m"]*CONST["g"]/2/k
 
 def coAngle(Cpq, Cpr, Fqr):
+    """Cosine of angle between two vectors
+
+    Provides cosine of the angle between two vectors by their spherical coordinates.
+    @f[
+        \cos(\theta) = \cos(\theta_1)\cos(\theta_2) + \sin(\theta_1)\sin(\theta_2)\cos(\Delta\phi)
+    @f]
+
+    Args:
+        Cpq: Cosine of the azimuthal component of the first vector
+        Cpr: Cosine of the azimuthal component of the second vector
+        Fqr: Polar angular distance between two vectors
+
+    Returns:
+        Float number. Cosine of angle between two vectors.
+    """
     return Cpq*Cpr + sp.sqrt(1 - Cpq**2)*sp.sqrt(1 - Cpr**2)*sp.cos(Fqr)
 
 # Matrix elements
 def tmMX(r, q, Trq):
+    """Toy model plane wave matrix element in coordinate representation
+
+    @f[
+        M(r, q, \theta) = \mathrm{e}^{-\frac{m r}{4 \pi r}} \left(\
+                    \mathrm{e}^{\mathrm{i} r q \cos(\theta)} + e^{-\mathrm{i} r q \cos(\theta)}
+                \right)
+    @f]
+
+    Args:
+        r: Absolute value of radius vector of out particle
+        q: Absolute value of momentum of in particle
+        Trq: Cosine of the angle between in and out vectors
+
+    Returns:
+        Float number. Value of matrix element between in and out states.
+
+    See Also:
+        m: sumrules::constants
+    """
     return sp.exp(-CONST["m"]*r)/4/sp.pi/r\
             *(sp.exp(1j*r*q*sp.cos(Trq)) + sp.exp(-1j*r*q*sp.cos(Trq)))
 
 def tmMP(q, p, Tqp, Fpq):
+    """Toy model plane wave matrix element in momentum representation
+    
+    @f[
+        M(q, p, \theta, \phi) = \frac{1}{q^2 + p^2 + 2pq\cos(\theta) + m^2}\
+                +\
+        \frac{1}{q^2 + p^2 - 2pq\cos{\theta} + m^2}
+    @f]
+
+    Args:
+        q: Absolute value of momentum of out particle
+        p: Absolute value of momentum of in particle
+        Tpq: Azimuthal angular distance between particles
+        Fpq: Polar angular distance between particles
+
+    Returns:
+        Float number. Value of matrix element between in and out states.
+
+    See Also:
+        m: sumrules::constants
+    """
     return 1/(q**2 + p**2 - 2*p*q*sp.cos(Tqp) + CONST["m"]**2)\
                 +\
            1/(q**2 + p**2 + 2*q*p*sp.cos(Tqp) + CONST["m"]**2)
 
 def sqedMP0(p, q, Tpq, Fpq):
+    """Scalar QED matrix element for spin-0 process in momentum representation
+    
+    @f[
+        M(p, q, \theta, \phi) = 2\mathrm{i} e^2 (1 - p^2\sin(\theta)^2) \left(
+            \frac{1}{p^2 + q^2 - 2pq\cos(\theta) + m^2}\
+                +\
+            \frac{1}{p^2 + q^2 + 2pq\cos(\theta) + m^2}\
+        \right)
+    @f]
+
+    Args:
+        q: Absolute value of momentum of out particle
+        p: Absolute value of momentum of in particle
+        Tpq: Azimuthal angular distance between particles
+        Fpq: Polar angular distance between particles
+
+    Returns:
+        Float number. Value of matrix element between in and out states.
+
+    See Also:
+        m: sumrules::constants
+        e: sumrules::constants
+    """
     return 2j*CONST["e"]**2*(1 - p**2*sp.sin(Tpq)**2\
             *(\
                 1/(p**2 + q**2 - 2*p*q*sp.cos(Tpq) + CONST["m"]**2)\
@@ -43,6 +187,29 @@ def sqedMP0(p, q, Tpq, Fpq):
              ))
 
 def sqedMP2(p, q, Tpq, Fpq):
+    """Scalar QED matrix element for spin-2 process in momentum representation
+    
+    @f[
+        M(p, q, \theta, \phi) = 2\mathrm{i} e^2 p^2\sin(\theta)^2 \left(
+            \frac{1}{p^2 + q^2 - 2pq\cos(\theta) + m^2}\
+                +\
+                \frac{1}{p^2 + q^2 + 2pq\cos(\theta) + m^2}\
+        \right) \mathrm{e}^{2 \mathrm{i} \phi}
+    @f]
+
+    Args:
+        q: Absolute value of momentum of out particle
+        p: Absolute value of momentum of in particle
+        Tpq: Azimuthal angular distance between particles
+        Fpq: Polar angular distance between particles
+
+    Returns:
+        Float number. Value of matrix element between in and out states.
+
+    See Also:
+        m: sumrules::constants
+        e: sumrules::constants
+    """
     return 2j*CONST["e"]**2*p**2*sp.sin(Tpq)**2\
             *(\
                 1/(p**2 + q**2 - 2*p*q*sp.cos(Tpq) + CONST["m"]**2)\
@@ -52,7 +219,35 @@ def sqedMP2(p, q, Tpq, Fpq):
 
 # Wave functions
 def psiColP(k, p, Tkp):
-    "\psi^{col}_p(k, p, Ckp) - Coulomb wave in momentum space"
+    """Coulomb wave function in momentum representation
+    Coulomb wave function in momentum representation, which is regularized
+    with `eps` parameter. More detailed about Coulomb wave you can read
+    in:
+    
+    https://dx.doi.org/10.1016/j.cpc.2014.10.002
+
+    @f[
+        \psi^{Coul}_k(p) = -4 \pi \mathrm{e}^{-\frac{\pi \eta(k)}{2}} \Gamma(1+\mathrm{i}\eta(k)) \left(\
+            \frac{2 (p^2 - (k + \mathrm{i} \varepsilon)^2)^{\mathrm{i} \eta(k)} \varepsilon\
+            (-1 - \mathrm{i}\eta(k))}{(p^2 + k^2 - 2pk\cos(\theta) + \varepsilon^2)^{(2 + \mathrm{i} \eta(k)}}\
+                +\
+            \frac{2 (k +  \mathrm{i} \varepsilon) \eta(k) (p^2 - (k + \mathrm{i}\varepsilon)^2)^{-1 + \mathrm{i} \eta(k)}}{\
+            (p^2 + k^2 - 2pk\cos(\theta) + \varepsilon^2)^{1 + \mathrm{i}\eta(k)}}\
+        \right)
+    @f]
+
+    Args:
+        k: Absolute value of momentum of bound state
+        p: Absolute value of momentum of plane wave
+        Tkp: Angle between bound state and plane wave momenta
+
+    Returns:
+        Float number. Value of wave function.
+
+    See Also:
+        eta: ::eta()
+        m: sumrules::constants
+    """
     return -4*sp.pi*sp.exp(-sp.pi*eta(k)/2)*sp.special.gamma(1 + 1j*eta(k))\
             *(\
                 2*(p**2 - (k + 1j*CONST["eps"])**2)**(1j*eta(k))*CONST["eps"]\
@@ -63,6 +258,40 @@ def psiColP(k, p, Tkp):
             )
 
 def psiColPdisc(n, l, M, p, Tpq, Fpq):
+    """Coulomb wave function for discrete spectrum in momentum representation
+
+    @f[
+        \psi_{n, l, M}(p, \theta, \phi) = (-\mathrm{i})^l (4 \pi) 2^{2 (l+1)} \frac{l!}{(n+l)^2}\
+            \sqrt{\frac{(n-1)!}{(n+2l)!}}\
+            (-\frac{2}{m g})^{3/2} \frac{(\frac{p (-\frac{2}{m g})}{n+l})^l}{\
+            ((-\frac{2}{m g}) p)^2 + (\frac{1}{n+l})^2)^{2+l}}\
+            G(n-1, l+1\
+                , \frac{(n+l)^2 (p (-\frac{2}{m g}))^2 - 1}{\
+                (n+l)^2 (p (-\frac{2}{m g}))^2 + 1})\
+            Y(M, l, \phi, \theta)
+    @f]
+
+    It depends on `M` also, but for specific calculations, usually, one should partially apply projection of momentum.
+
+    Args:
+        n: Energy level
+        l: Orbital quantum number
+        M: Angular momentum projection
+        p: Absolute value of momentum of the particle
+        Tpq: Azimuthal direction of the particle
+        Fpq: Polar direction of the particle
+
+    Returns:
+        Float number. Value of discrete Coulomb wave function
+
+    See Also:
+        m: sumrules::constants
+        g: sumrules::constants
+        G: [Gegenbauer polynomials](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.gegenbauer.html)
+        Y: [Spherical harmonics](https://docs.scipy.org/doc/scipy-0.19.1/reference/generated/scipy.special.sph_harm.html)
+
+    """
+
     for bo in sp.broadcast(n, l, M):
         if bo[2] not in range(-bo[1], bo[1]+1):
             return 0
@@ -81,4 +310,22 @@ def psiColPdisc(n, l, M, p, Tpq, Fpq):
 
 # Spectra
 def energColDisc(n, l):
+    """Discrete energy spectrum of the Coulomb bound states 
+
+    @f[
+        E_{n,l} = 2m - \frac{m g^2}{4 (n+l)^2}
+    @f]
+
+    Args:
+        n: Energy level
+        l: Orbital quantum number
+
+    Returns:
+        Float number. Energy for specific level
+
+    See Also:
+        m: sumrules::constants
+        g: sumrules::constants
+
+    """
     return 2*CONST["m"] - CONST["m"]*CONST["g"]**2/4/(n+l)**2
