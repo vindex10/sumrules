@@ -1,3 +1,9 @@
+"""@package ConfigManager
+Centralized manager of objects' configs
+
+The only thing object should have, to be managable, is a `params` method.
+See its basic implementation in sumrules::Config
+"""
 from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
@@ -6,6 +12,14 @@ import os
 import re
 
 class ConfigManager(object):
+    """ Implementation of a centralized config manager.
+
+        Attributes:
+            watching: dict which stores Label -> Object pairs.
+            _cfgre: regular expression for cfg entry.
+            _prefre: regular expression to detach prefix from cfg entry.
+    """
+
     _prefre = re.compile("^([A-Z0-9]+)_")
     _cfgre = re.compile("([^=\s]+)\s*=\s*(?:\"(.+)\"|'(.+)'|([^\s]+))")
 
@@ -13,6 +27,15 @@ class ConfigManager(object):
         self.watching = dict()
 
     def register(self, module, prefix):
+        """ Bind Label to Object.
+            
+            Args:
+                module: object you want to register.
+                prefix: label for object. Use it as prefix in cfg files.
+            
+            Returns:
+                Nothing.
+        """
         assert prefix not in self.watching.keys()
         assert self._prefre.match(prefix+"_")
         assert "params" in module.__dir__()
@@ -23,6 +46,29 @@ class ConfigManager(object):
             del self.watching[prefix]
     
     def readEnv(self, prefix=None):
+        """Read cfg entries from environment and update corresponding objects
+            
+            Kwargs:
+                prefix: look for entries with specific prefix.
+
+            Returns:
+                Nothing.
+
+            Example:
+                
+                ## example.py
+                # We need a managable object
+                >>> obj = Config({"foo": "bar"})
+                >>> 
+                >>> cmgr = ConfigManager()
+                >>> cmgr.register(obj, "OBJ")
+                >>> cmgr.readEnv()
+                >>> 
+                >>> obj.params()
+
+                $ OBJ_foo="barbarian" python example.py
+                {"foo", "barbarian"}
+        """
         if prefix is None:
             for pref in self.watching.keys():
                 self.readEnv(prefix=pref)
@@ -37,6 +83,33 @@ class ConfigManager(object):
 
 
     def readFile(self, filename, prefix=None):
+        """Read cfg entries from file and update corresponding objects.
+            
+            Args:
+                filename: name of file to read entries from.
+                prefix: look for entries with specific prefix.
+
+            Returns:
+                Nothing.
+
+            Examples:
+                
+                ## example.py
+                # We need a managable object
+                >>> obj = Config({"foo": "bar"})
+                >>> 
+                >>> cmgr = ConfigManager()
+                >>> cmgr.register(obj, "OBJ")
+                >>> cmgr.readFile("example.conf")
+                >>> 
+                >>> obj.params()
+
+                ## example.conf
+                OBJ_foo = barbarian
+
+                $ python example.py
+                {"foo", "barbarian"}
+        """
         if prefix is None:
             for pref in self.watching.keys():
                 self.readFile(filename, prefix=pref)
@@ -80,6 +153,26 @@ class ConfigManager(object):
         return self.items()
 
     def _entryToPair(self, entry):
+        """ Convert config entry Key to Prefix -> ObjKey pair.
+            
+            Args:
+                entry: a key of the config entry.
+
+            Returns:
+                tuple(Prefix, ObjKey). Tuple of prefix and corresponding
+                field name.
+           
+            Examples:
+
+                # Line in config
+                OBJ_foo = bar
+
+                # Entry(here)
+                OBJ_foo
+
+                # Returned value:
+                tuple(OBJ, foo)
+        """
         match = self._prefre.match(entry)
         if not match:
             return False
@@ -88,8 +181,19 @@ class ConfigManager(object):
 
     @staticmethod
     def _parseStr(a):
+        """ Convert user input into a Python type.
+            
+            Args:
+                a: input value.
+
+            Returns:
+                * `bool` True/False if input is "True" or "False".
+                * `int` if Python is able to convert input into `int` explicitly.
+                * `float` if Python is able to convert input into `float` explicitly.
+                * `str` otherwise.
+        """
         if a == "True":
-            return True
+                        return True
 
         if a == "False":
             return False
