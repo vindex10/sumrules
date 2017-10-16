@@ -29,9 +29,9 @@ class McolPEvaluator(Integrator):
         Attributes:
             psiColP: Coulomb wave function in momentum space.
             MP: plane wave matrix element.
-            area: see sumrules::evalcls::Integrator.
-            absErr: see sumrules::evalcls::Integrator.
-            relErr: see sumrules::evalcls::Integrator.
+            area: see sumrules::evalcls::Integrator::Integrator.
+            absErr: see sumrules::evalcls::Integrator::Integrator.
+            relErr: see sumrules::evalcls::Integrator::Integrator.
     """
 
     def __init__(self, mp, psicolp):
@@ -126,9 +126,9 @@ class McolPDiscEvaluator(Integrator):
             psiColP: Coulomb wave function.
             denerg: discrete energy levels corresponding to `psiColP`.
             MP: plane wave matrix element.
-            area: see sumrules::evalcls::Integrator.
-            absErr: see sumrules::evalcls::Integrator.
-            relErr: see sumrules::evalcls::Integrator.
+            area: see sumrules::evalcls::Integrator::Integrator.
+            absErr: see sumrules::evalcls::Integrator::Integrator.
+            relErr: see sumrules::evalcls::Integrator::Integrator.
     """
 
     def __init__(self, mp, psicolp, denerg):
@@ -263,9 +263,9 @@ class SigmaEvaluator(Integrator):
         Attributes:
             MPEvaluatorInstance: instance of sumrules::evalcls::Evaluator.
                 Should `compute` matrix element of the process.
-            area: see sumrules::evalcls::Integrator.
-            absErr: see sumrules::evalcls::Integrator.
-            relErr: see sumrules::evalcls::Integrator.
+            area: see sumrules::evalcls::Integrator::Integrator.
+            absErr: see sumrules::evalcls::Integrator::Integrator.
+            relErr: see sumrules::evalcls::Integrator::Integrator.
     """
     
     def __init__(self, mp):
@@ -345,9 +345,9 @@ class SumruleEvaluator(Integrator):
         Attributes:
             SigmaEvaluatorInstance: instance of sumrules::evalcls::Evaluator.
                 Should `compute` cross-section corresponding to process.
-            area: see sumrules::evalcls::Integrator.
-            absErr: see sumrules::evalcls::Integrator.
-            relErr: see sumrules::evalcls::Integrator.
+            area: see sumrules::evalcls::Integrator::Integrator.
+            absErr: see sumrules::evalcls::Integrator::Integrator.
+            relErr: see sumrules::evalcls::Integrator::Integrator.
     
     """
 

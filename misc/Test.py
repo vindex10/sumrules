@@ -17,7 +17,7 @@ class Test(object):
         A bundle which makes use of:
         * sumrules::lib::evaluators and sumrules::lib::analytics
             to construct a scheme for compuatations.
-        * sumrules::misc::ConfigManager to manage configs of evaluators.
+        * sumrules::misc::ConfigManager::ConfigManager to manage configs of evaluators.
         
         And provides:
         * Ability to load configuration from file or pass from env.
@@ -27,11 +27,12 @@ class Test(object):
         Attributes:
             title: test title to use when saving data.
             configPath: path to config file, to load cfg from.
-            config: instance of sumrules::misc::ConfigManager.
+            config: instance of sumrules::misc::ConfigManager::ConfigManager.
             interactive: bool, identifying whether to write logs to stdout.
             outputPath: path to store all test's outputs
             _keylist: list of attributes to be managed by
-                sumrules::misc::ConfigManager. See there for more details.            
+                sumrules::misc::ConfigManager::ConfigManager.
+                See there for more details.            
     """
 
     def __init__(self, title="unnamed"):
@@ -117,7 +118,7 @@ class Test(object):
 
     def run(self):
         """ Basic run implementation.
-            
+
             Only dump current config to file.
         """
         with open(self.outputPath+"/params", "a") as f:
