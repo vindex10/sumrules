@@ -142,8 +142,11 @@ class ConfigManager(object):
                 yield (prefix+"_"+key, value)
 
     def __getitem__(self, entry):
-        prefix, key = self._entryToPair(entry)
-        return self.watching[prefix].params()[key]
+        try:
+            prefix, key = self._entryToPair(entry)
+            return self.watching[prefix].params()[key]
+        except TypeError:
+            raise KeyError
 
     def __setitem__(self, entry, value):
         prefix, key = self._entryToPair(entry)

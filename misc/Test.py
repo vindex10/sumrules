@@ -100,21 +100,19 @@ class Test(object):
         """
         if self.interactive:
             print(data)
-        f.write(data+"\n")
+        f.write(str(data) + "\n")
 
-    def path(self, fname):
-        """ Return path relatively to working directory.
+    def path(self, *paths):
+        """ Analog for os.path.join, but relatively to test's `outputDir`
             
-            Transform path relative to `outputDir` to corresponding
-            path relative to working directory.
-
             Args:
-                fname: path relative to `outputDir`.
+                *paths: pathes to join into resulting one.
 
             Returns:
-                Path relative to working directory.
+                String. The path.
         """
-        return os.path.join(self.outputPath, fname)
+        return os.path.join(self.outputPath\
+                           ,*paths)
 
     def run(self):
         """ Basic run implementation.
