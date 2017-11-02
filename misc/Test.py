@@ -101,6 +101,7 @@ class Test(object):
         if self.interactive:
             print(data)
         f.write(str(data) + "\n")
+        f.flush()
 
     def path(self, *paths):
         """ Analog for os.path.join, but relatively to test's `outputDir`

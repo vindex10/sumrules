@@ -133,7 +133,8 @@ class McolPDiscEvaluator(Integrator):
 
     def __init__(self, mp, psicolp, denerg):
         super(McolPDiscEvaluator, self).__init__()
-        self._keylist += ["maxP"
+        self._keylist += ["minP"
+                         ,"maxP"
                          ,"absErr"
                          ,"relErr"]
 
@@ -151,10 +152,13 @@ class McolPDiscEvaluator(Integrator):
 
         if params is None:
             suparams.update({"maxP": self.area[0][1]})
+            suparams.update({"minP": self.area[0][0]})
             return suparams
 
         if "maxP" in params.keys():
             self.area[0][1] = params["maxP"]
+        if "minP" in params.keys():
+            self.area[0][1] = params["minP"]
         
         return True
 

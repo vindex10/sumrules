@@ -311,6 +311,40 @@ def psiColPdisc(n, l, M, p, Tpq, Fpq):
                                         /((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 + 1))\
             *sp.special.sph_harm(M, l, Fpq, Tpq)
 
+def psiColPdisc0(n, l, p, Tpq, Fpq):
+    """ Coulomb wave function for spin-0 bound state.
+        Force angular momentum projection to be 0 in `psiColPdisc`.
+
+        Args:
+            n: energy level.
+            l: orbital quantum number.
+            p: absolute value of momentum of the particle.
+            Tpq: azimuthal direction of the particle.
+            Fpq: polar direction of the particle.
+
+        Returns:
+            Float number. Value of discrete Coulomb wave function of spin-0 particle.
+    """
+
+    return psiColPdisc(n, l, 0, p, Tpq, Fpq)
+
+def psiColPdisc2(n, l, p, Tpq, Fpq):
+    """ Coulomb wave function for spin-2 bound state.
+        Force angular momentum projection to be 2 in `psiColPdisc`.
+
+        Args:
+            n: energy level.
+            l: orbital quantum number.
+            p: absolute value of momentum of the particle.
+            Tpq: azimuthal direction of the particle.
+            Fpq: polar direction of the particle.
+
+        Returns:
+            Float number. Value of discrete Coulomb wave function of spin-2 particle.
+    """
+
+    return psiColPdisc(n, l, 2, p, Tpq, Fpq)
+
 # Spectra
 def energColDisc(n, l):
     """ Discrete energy spectrum of the Coulomb bound states.

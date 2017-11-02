@@ -186,30 +186,19 @@ class ConfigManager(object):
     def _parseStr(a):
         """ Convert user input into a Python type.
             
+            Try evaluate expression as a Python data structure, return `str`
+            otherwise. `ast.literal_eval` is used under the hood, so one can
+            even pass simple arithmetical expressions as an argument.
+
             Args:
                 a: input value.
 
             Returns:
-                * `bool` True/False if input is "True" or "False".
-                * `int` if Python is able to convert input into `int` explicitly.
-                * `float` if Python is able to convert input into `float` explicitly.
+                * passed data structure if possible.
                 * `str` otherwise.
         """
-        if a == "True":
-                        return True
-
-        if a == "False":
-            return False
-
         try:
-            return int(a)
-        except ValueError:
-            pass
-
-        try:
-            return float(a)
-        except ValueError:
-            pass
-
-        return a
+            return ast.literal_eval(a)
+        except:
+            return str(a)
 
