@@ -158,7 +158,7 @@ class McolPDiscEvaluator(Integrator):
         if "maxP" in params.keys():
             self.area[0][1] = params["maxP"]
         if "minP" in params.keys():
-            self.area[0][1] = params["minP"]
+            self.area[0][0] = params["minP"]
         
         return True
 

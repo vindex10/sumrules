@@ -8,6 +8,7 @@ from __future__ import (absolute_import, division,
                         print_function, unicode_literals)
 from builtins import *
 
+import ast
 import os
 import re
 
@@ -199,6 +200,6 @@ class ConfigManager(object):
         """
         try:
             return ast.literal_eval(a)
-        except:
+        except (SyntaxError, ValueError):
             return str(a)
 
