@@ -430,6 +430,50 @@ class SumruleEvaluator(Integrator):
         return res
 
 
+class SumruleLogEvaluator(SumruleEvaluator):
+    """ Evaluator for sumrule in continuous spectrum in LogScale.
+    
+        See Also:
+            SumruleEvaluator
+    """
+
+    def compute(self):
+        """ Compute sumrule.
+        
+            Returns:
+                Float. Value of sumrule.
+        """
+        area = self.areaCyclics()
+        res, err = cubature(self.sumrule_f\
+                           ,area.shape[0], 1\
+                           ,sp.log(area.T[0])\
+                           ,sp.log(area.T[1])\
+                           ,abserr=self.absErr, relerr=self.relErr\
+                           ,vectorized=self.vectorized)
+        return res[0]
+
+    def sumrule_f(self, x_args):
+        """ Subintegral function in log scale.
+            
+            Args:
+                x_args: variable to integrate over.
+                    * x_args[0] an `s` Mandelstam variable.
+
+            Returns:
+                NumPy array for `cubature`. The value of subintegral func.
+        """
+        x_args = self.xargsCyclics(x_args)
+
+        res = self.cubMap(lambda px:\
+                self.SigmaEvaluatorInstance.compute(sp.exp(px[0])), x_args)
+        res *= self.cyclicPrefactor()
+
+        if self.monitor is not None:
+            self.monitor.push(evutils.stackArgRes(x_args, res))
+
+        return res
+
+
 class SumruleDiscEvaluator(Evaluator):
     """ Evaluate sumrule for discrete spectrum.
         
