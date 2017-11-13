@@ -15,13 +15,19 @@ from .. import config
 
 class mpPool(object):
     numth = config["numThreads"]
+    maxtask = config["maxTaskPerChild"]
     thepool = multiprocessing.dummy.Pool(config["numThreads"])
 
     @staticmethod
     def get():
-        if mpPool.numth != config["numThreads"]:
+        if mpPool.numth != config["numThreads"]\
+           or mpPool.maxtask != config["maxTaskPerChild"]:
             mpPool.numth = config["numThreads"]
-            mpPool.thepool = multiprocessing.dummy.Pool(mpPool.numth)
+            mpPool.maxtask = config["maxTaskPerChild"]
+            mpPool.thepool = multiprocessing\
+                             .dummy\
+                             .Pool(processes=mpPool.numth
+                                  ,maxtaskperchild=mpPool.maxtask)
         return mpPool.thepool
 
 def mpMap(f, data):

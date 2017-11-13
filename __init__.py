@@ -32,4 +32,5 @@ constants = Config({"g": 0.6
 #   * numThreads: number of threads available for multiprocessing
 
 config = Config({"numThreads": 4
+                ,"maxTaskPerChild": 1000
                 }) 
