@@ -13,23 +13,6 @@ import scipy as sp
 import multiprocessing.dummy
 from .. import config
 
-class mpPool(object):
-    numth = config["numThreads"]
-    maxtask = config["maxTaskPerChild"]
-    thepool = multiprocessing.dummy.Pool(config["numThreads"])
-
-    @staticmethod
-    def get():
-        if mpPool.numth != config["numThreads"]\
-           or mpPool.maxtask != config["maxTaskPerChild"]:
-            mpPool.numth = config["numThreads"]
-            mpPool.maxtask = config["maxTaskPerChild"]
-            mpPool.thepool = multiprocessing\
-                             .dummy\
-                             .Pool(processes=mpPool.numth
-                                  ,maxtaskperchild=mpPool.maxtask)
-        return mpPool.thepool
-
 def mpMap(f, data):
     """ Multiprocessing map.
         Use Python's multiprocessing module to map `f` onto `data`
@@ -42,7 +25,8 @@ def mpMap(f, data):
         Returns:
             NumPy array of computed values.    
     """
-    res = mpPool.get().map(f, data)
+    pool = multiprocessing.dummy.Pool(config["numThreads"])
+    res = pool.map(f, data)
     return sp.hstack(res)
 
 def npMap(f, data):
