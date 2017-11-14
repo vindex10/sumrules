@@ -27,6 +27,8 @@ def mpMap(f, data):
     """
     pool = multiprocessing.dummy.Pool(config["numThreads"])
     res = pool.map(f, data)
+    pool.close()
+    pool.join()
     return sp.hstack(res)
 
 def npMap(f, data):
