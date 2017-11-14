@@ -7,8 +7,7 @@ from __future__ import (absolute_import, division,
 from builtins import *
 
 import scipy as sp
-from scipy import special
-from scipy import misc
+import scipy.special.cython_special as special
 
 from .. import constants as CONST
 
@@ -251,7 +250,7 @@ def psiColP(k, p, Tkp):
             eta: ::eta()
             m: sumrules::constants
     """
-    return -4*sp.pi*sp.exp(-sp.pi*eta(k)/2)*sp.special.gamma(1 + 1j*eta(k))\
+    return -4*sp.pi*sp.exp(-sp.pi*eta(k)/2)*special.gamma(1 + 1j*eta(k))\
             *(\
                 2*(p**2 - (k + 1j*CONST["eps"])**2)**(1j*eta(k))*CONST["eps"]\
                 *(-1 - 1j*eta(k))/(p**2 + k**2 - 2*p*k*sp.cos(Tkp) + CONST["eps"]**2)**(2 + 1j*eta(k))\
@@ -301,15 +300,15 @@ def psiColPdisc(n, l, M, p, Tpq, Fpq):
         if bo[1] not in range(bo[0]):
             return 0
 
-    return (-1j)**l *(4*sp.pi) *2**(2*(l+1)) *sp.misc.factorial(l)/(n+l)**2\
-            *sp.sqrt(sp.special.factorial(n-1)/sp.special.factorial(n+2*l))\
+    return (-1j)**l *(4*sp.pi) *2**(2*(l+1)) *special.gamma(l+1)/(n+l)**2\
+            *sp.sqrt(special.gamma(n)/special.gamma(n+2*l+1))\
             *(2/CONST["m"]/(-CONST["g"]))**(3/2)*((p*(2/CONST["m"]/(-CONST["g"])))/(n+l))**l\
             /(((2/CONST["m"]/(-CONST["g"]))*p)**2 + 1/(n+l)**2)**(2+l)\
-            *sp.special.eval_gegenbauer(n-1\
+            *special.eval_gegenbauer(n-1\
                                        ,l+1\
                                        ,((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 - 1)\
                                         /((n+l)**2*(p*(2/CONST["m"]/(-CONST["g"])))**2 + 1))\
-            *sp.special.sph_harm(M, l, Fpq, Tpq)
+            *special.sph_harm(M, l, Fpq, Tpq)
 
 def psiColPdisc0(n, l, p, Tpq, Fpq):
     """ Coulomb wave function for spin-0 bound state.
