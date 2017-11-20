@@ -218,8 +218,74 @@ def sqedMP2(p, q, Tpq, Fpq):
             *(\
                 1/(p**2 + q**2 - 2*p*q*sp.cos(Tpq) + CONST["m"]**2)\
                     +\
-                1/(p**2 + q**2 + 2*p*q*sp.cos(Tpq) + CONST["m"]**2))*sp.exp(2j*Fpq\
-            )
+                1/(p**2 + q**2 + 2*p*q*sp.cos(Tpq) + CONST["m"]**2)\
+            )*sp.exp(2j*Fpq)
+
+def sqedMP0onsh(p, q, Tpq, Fpq):
+    """ Scalar QED matrix element for spin-0 process in momentum representation.
+        
+        This version on the contrary to `sqedMP0` uses "on-shell reduction".
+
+        @f[
+            M(p, q, \theta, \phi) = 2\mathrm{i} e^2 (1 - p^2\sin(\theta)^2) \left(
+                \frac{1}{2q (-E_p + 2p\cos(\theta))}\
+                    +\
+                \frac{1}{2q (-E_p - 2p\cos(\theta))}\
+            \right)
+        @f]
+
+        Args:
+            q: absolute value of momentum of out particle.
+            p: absolute value of momentum of in particle.
+            Tpq: azimuthal angular distance between particles.
+            Fpq: polar angular distance between particles.
+
+        Returns:
+            Float number. Value of matrix element between in and out states.
+
+        See Also:
+            m: sumrules::constants
+            e: sumrules::constants
+    """
+    return 2j*CONST["e"]**2*(1 - p**2*sp.sin(Tpq)**2\
+            *(\
+                1/(2*q*( -sp.sqrt(p**2 + CONST["m"]**2) + 2*p*sp.cos(Tpq)))\
+                    +\
+                1/(2*q*( -sp.sqrt(p**2 + CONST["m"]**2) - 2*p*sp.cos(Tpq)))\
+             ))
+
+def sqedMP2onsh(p, q, Tpq, Fpq):
+    """ Scalar QED matrix element for spin-2 process in momentum representation.
+        
+        This version on the contrary to `sqedMP0` uses "on-shell reduction".
+
+        @f[
+            M(p, q, \theta, \phi) = 2\mathrm{i} e^2 p^2\sin(\theta)^2 \left(
+                \frac{1}{2q (-E_p + 2p\cos(\theta))}\
+                    +\
+                \frac{1}{2q (-E_p - 2p\cos(\theta))}\
+            \right) \mathrm{e}^{2 \mathrm{i} \phi}
+        @f]
+
+        Args:
+            q: absolute value of momentum of out particle.
+            p: absolute value of momentum of in particle.
+            Tpq: azimuthal angular distance between particles.
+            Fpq: polar angular distance between particles.
+
+        Returns:
+            Float number. Value of matrix element between in and out states.
+
+        See Also:
+            m: sumrules::constants
+            e: sumrules::constants
+    """
+    return 2j*CONST["e"]**2*p**2*sp.sin(Tpq)**2\
+            *(\
+                1/(2*q*( -sp.sqrt(p**2 + CONST["m"]**2) + 2*p*sp.cos(Tpq)))\
+                    +\
+                1/(2*q*( -sp.sqrt(p**2 + CONST["m"]**2) - 2*p*sp.cos(Tpq)))\
+            )*sp.exp(2j*Fpq)
 
 # Wave functions
 def psiColP(k, p, Tkp):
