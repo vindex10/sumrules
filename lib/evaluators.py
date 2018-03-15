@@ -55,11 +55,14 @@ class McolPEvaluator(Integrator):
         suparams = super(McolPEvaluator, self).params(params)
 
         if params is None:
-            suparams.update({"maxP": self.area[0][1]})
+            suparams.update({"maxP": self.area[0][1]
+                            ,"minP": self.area[0][0]})
             return suparams
 
         if "maxP" in params.keys():
             self.area[0][1] = params["maxP"]
+        if "minP" in params.keys():
+            self.area[0][0] = params["minP"]
         
         return True
 
@@ -104,6 +107,66 @@ class McolPEvaluator(Integrator):
                 NumPy array for `cubature`. The value of subintegral func.
         """
         x_args = self.xargsCyclics(x_args)
+
+        res = self.cubMap(lambda px:\
+                    sp.sin(px[1])\
+                    *px[0]**2/(2*sp.pi)**3*(alyt.energ(p, self.CONST["m"])/alyt.energ(px[0], self.CONST["m"]))\
+                    *sp.conj(self.psiColP(p, px[0], sp.arccos(alyt.coAngle(sp.cos(Tpq), sp.cos(px[1]), px[2]-Fpq))))\
+                    *self.MP(px[0], q, px[1], px[2])\
+                ,x_args)
+        res = self.cyclicPrefactor()*sp.array((sp.real(res), sp.imag(res))).T
+
+        if self.monitor is not None:
+            self.monitor.push(evutil.stackArgRes(x_args, res, sp.array((p, q, Tpq))))
+        
+        return res
+
+class McolPLogEvaluator(McolPEvaluator):
+    """ Evalute McolP in logscale.
+    """
+    def compute(self, p, q, Tpq, Fpq):
+        """ Compute McolP value.
+            
+            Args:
+                p: out-momentum.
+                q: in-momentum.
+                Tpq: azimuthal angle of out- state relatively to in-state.
+                Fpq: polar angle of out- state relatively to in-state.
+
+            Returns:
+                Complex float, value of Coulomb matrix element.
+        """
+        area = self.areaCyclics()
+        print(area)
+
+        res, err = cubature(self.McolP_f\
+                           ,area.shape[0], 2\
+                           ,sp.hstack((sp.log(area[0,0]), area[1:, 0]))\
+                           ,sp.hstack((sp.log(area[0,1]), area[1:, 1]))\
+                           ,args=(p, q, Tpq, Fpq)\
+                           ,abserr=self.absErr, relerr=self.relErr\
+                           ,vectorized=self.vectorized)
+
+        return res[0] + 1j*res[1]
+
+    def McolP_f(self, x_args, p, q, Tpq, Fpq):
+        """ Subintegral function.
+            
+            Args:
+                x_args: 3D momentum of an out- plane wave.
+                    * x_args[0] for it's radial component.
+                    * x_args[1] for it's azimuthal component.
+                    * x_args[2] for it's polar component.
+                p: momentum of out-state
+                q: momentum of in-state
+                Tpq: azimuthal angle of out-state relatively to in-state.
+                Fpq: polar angle of out-state relatively to in-state.
+
+            Returns:
+                NumPy array for `cubature`. The value of subintegral func.
+        """
+        x_args = self.xargsCyclics(x_args)
+        x_args[:,0] = sp.exp(x_args[:, 0])
 
         res = self.cubMap(lambda px:\
                     sp.sin(px[1])\
